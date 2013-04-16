@@ -501,4 +501,45 @@ def simulationWithDrug(numViruses, maxPop, maxBirthProb, clearProb, resistances,
     
     """
 
-    # TODO
+    timeSteps = 300
+    pop_list = [0] * timeSteps
+    for trial in range(numTrials):
+        
+        virusList = []
+        for i in range(numViruses):
+            virusList.append(ResistantVirus(maxBirthProb, clearProb, resistances, mutProb))
+        p = TreatedPatient(virusList, maxPop)
+        # No drugs for this part
+        for step in range(timeSteps / 2):
+            pop = p.update()
+            #print "Step : " + str(step) + " pop : " + str(pop)
+            pop_list[step] += pop
+
+        #print step
+
+        p.addPrescription('guttagonol')
+        #After adding guttagonol
+        for step in range(step + 1, timeSteps ):
+            pop = p.update()
+            #print "Step : " + str(step) + " pop : " + str(pop)
+            pop_list[step] += pop
+        
+    
+    for step in range(timeSteps):
+        pop_list[step] = pop_list[step] / float(numTrials)
+
+
+    # begin plotting code
+    title = 'Resistant Virus Simulation'
+    x_label = "Time Steps"
+    y_label = 'Average Virus Population'
+    pylab.title(title)
+    pylab.xlabel(x_label)
+    pylab.ylabel(y_label)
+    pylab.plot(range(timeSteps), pop_list, 'r-', label="Average Number of Viruses")
+    pylab.legend(loc=3)
+    pylab.annotate('Added guttagonol', xy=(150, 500), xytext = (200,400) , arrowprops=dict(facecolor='black', shrink=0.05))
+    pylab.show()
+
+
+#simulationWithDrug(100, 1000, 0.1, 0.05, {"guttagonol": False}, 0.005,50)
