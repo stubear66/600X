@@ -356,8 +356,7 @@ class ResistantVirus(SimpleVirus):
                     else:
                         childResistances[resistance] = not (resistances[resistance])
                 return ResistantVirus(self.getMaxBirthProb(), self.getClearProb(), childResistances, self.getMutProb())
-            else:
-                raise NoChildException
+        raise NoChildException
 
             
 
@@ -379,7 +378,8 @@ class TreatedPatient(Patient):
         maxPop: The  maximum virus population for this patient (an integer)
         """
 
-        # TODO
+        Patient.__init__(self, viruses, maxPop)
+        self.drugs = []
 
 
     def addPrescription(self, newDrug):
@@ -393,7 +393,8 @@ class TreatedPatient(Patient):
         postcondition: The list of drugs being administered to a patient is updated
         """
 
-        # TODO
+        if newDrug not in self.drugs:
+            self.drugs.append(newDrug)
 
 
     def getPrescriptions(self):
@@ -404,7 +405,7 @@ class TreatedPatient(Patient):
         patient.
         """
 
-        # TODO
+        return self.drugs
 
 
     def getResistPop(self, drugResist):
@@ -418,8 +419,16 @@ class TreatedPatient(Patient):
         returns: The population of viruses (an integer) with resistances to all
         drugs in the drugResist list.
         """
+        resistPop = 0
 
-        # TODO
+        for virus in self.viruses:
+            rFlag = True
+            for drug in drugResist:
+                rFlag = rFlag and virus.isResistantTo(drug)
+            if rFlag == True:
+                resistPop +=1                
+        return resistPop
+            
 
 
     def update(self):
@@ -443,8 +452,27 @@ class TreatedPatient(Patient):
         integer)
         """
 
-        # TODO
+        newVirusList = []
+        virusList = self.getViruses()
+        for virus in virusList:
+            if virus.doesClear() == False:
+                newVirusList.append(virus)
+        self.viruses = newVirusList
+        newPopDen =  (float(self.getTotalPop()))/self.maxPop
+        #print newPopDen, self.getTotalPop()
+        newVirusList = list(self.viruses)
+        activeDrugs = self.getPrescriptions()
+        if newPopDen < 1:
+            for virus in self.viruses:
+                try:
+                    #child = virus.reproduce(newPopDen)
+                    child = virus.reproduce(newPopDen, activeDrugs)
+                    newVirusList.append(child)
+                except NoChildException:
+                    pass
+            self.viruses = newVirusList
 
+        return self.getTotalPop()
 
 
 #
