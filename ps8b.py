@@ -457,20 +457,24 @@ class TreatedPatient(Patient):
         for virus in virusList:
             if virus.doesClear() == False:
                 newVirusList.append(virus)
-        self.viruses = newVirusList
-        newPopDen =  (float(self.getTotalPop()))/self.maxPop
+        #self.viruses = newVirusList
+        newPopDen =  len(newVirusList)/float(self.getMaxPop())
+        #print newPopDen
         #print newPopDen, self.getTotalPop()
-        newVirusList = list(self.viruses)
+        #newVirusList = list(self.viruses)
         activeDrugs = self.getPrescriptions()
-        if newPopDen < 1:
-            for virus in self.viruses:
-                try:
-                    #child = virus.reproduce(newPopDen)
+        virusList = []
+        virusList += newVirusList
+        #print len(virusList)
+        for virus in virusList:
+            try:
+                #child = virus.reproduce(newPopDen)
+                if newPopDen < 1 :
                     child = virus.reproduce(newPopDen, activeDrugs)
                     newVirusList.append(child)
-                except NoChildException:
-                    pass
-            self.viruses = newVirusList
+            except NoChildException:
+                pass
+        self.viruses = newVirusList
 
         return self.getTotalPop()
 
@@ -503,43 +507,47 @@ def simulationWithDrug(numViruses, maxPop, maxBirthProb, clearProb, resistances,
 
     timeSteps = 300
     pop_list = [0] * timeSteps
+    resist_list = [0] * timeSteps
+    drug_list = ['guttagonol']
     for trial in range(numTrials):
         
         virusList = []
         for i in range(numViruses):
             virusList.append(ResistantVirus(maxBirthProb, clearProb, resistances, mutProb))
         p = TreatedPatient(virusList, maxPop)
-        # No drugs for this part
-        for step in range(timeSteps / 2):
-            pop = p.update()
-            #print "Step : " + str(step) + " pop : " + str(pop)
-            pop_list[step] += pop
-
-        #print step
-
-        p.addPrescription('guttagonol')
-        #After adding guttagonol
-        for step in range(step + 1, timeSteps ):
-            pop = p.update()
-            #print "Step : " + str(step) + " pop : " + str(pop)
-            pop_list[step] += pop
         
+        for step in range(timeSteps):
+            pop = p.update()
+            #print "Step : " + str(step) + " pop : " + str(pop)
+            if step == timeSteps / 2 :
+                # print "At step " + str(step) + " Adding drug " + drug_list[0]
+                p.addPrescription(drug_list[0]) 
+            pop_list[step] += pop
+            if len(resistances) > 0 :
+                resist_pop = p.getResistPop(drug_list)
+            else:
+                resist_pop = 0
+            resist_list[step] += resist_pop
     
     for step in range(timeSteps):
         pop_list[step] = pop_list[step] / float(numTrials)
+        resist_list[step] = resist_list[step] / float(numTrials)
+
 
 
     # begin plotting code
+    
     title = 'Resistant Virus Simulation'
     x_label = "Time Steps"
     y_label = 'Average Virus Population'
     pylab.title(title)
     pylab.xlabel(x_label)
     pylab.ylabel(y_label)
-    pylab.plot(range(timeSteps), pop_list, 'r-', label="Average Number of Viruses")
+    pylab.plot(range(timeSteps), pop_list, 'g-', label="Average Number of Viruses")
+    pylab.plot(range(timeSteps), resist_list, 'r-', label = "Average # of Resistant Viruses")
     pylab.legend(loc=3)
-    pylab.annotate('Added guttagonol', xy=(150, 500), xytext = (200,400) , arrowprops=dict(facecolor='black', shrink=0.05))
+    #pylab.annotate('Added guttagonol', xy=(150, 500), xytext = (200,400) , arrowprops=dict(facecolor='black', shrink=0.05))
     pylab.show()
-
+    
 
 #simulationWithDrug(100, 1000, 0.1, 0.05, {"guttagonol": False}, 0.005,50)
